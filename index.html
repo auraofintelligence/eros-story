@@ -242,8 +242,8 @@
 
   <script>
   // --- Small utilities ---
-  const $ = s => document.querySelector(s);
-  const $$ = s => Array.from(document.querySelectorAll(s));
+  const qs = (s, root=document) => root.querySelector(s);
+  const qsa = (s, root=document) => Array.from(root.querySelectorAll(s));
   const haptic = ms => (navigator.vibrate && navigator.vibrate(ms||10));
   const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
   const nowISO = () => new Date().toISOString();
@@ -301,16 +301,16 @@
     const y0 = state.settings.startYear||2025; const total = state.settings.totalYears||11;
     const y = new Date().getFullYear();
     const idx = clamp((y - y0) + 1, 1, total);
-    $('#yearTracker').textContent = `Year ${idx} of ${total}`;
+    qs('#yearTracker').textContent = `Year ${idx} of ${total}`;
   }
 
   // --- Sheets helpers ---
-  function openSheet(id){ const el = $('#'+id); if(!el) return; el.classList.add('open'); el.setAttribute('aria-hidden','false'); }
-  function closeSheet(id){ const el = $('#'+id); if(!el) return; el.classList.remove('open'); el.setAttribute('aria-hidden','true'); }
-  $$('.sheet .shade').forEach(sh=> sh.addEventListener('click', e=> closeSheet(e.target.getAttribute('data-close'))));
+  function openSheet(id){ const el = qs('#'+id); if(!el) return; el.classList.add('open'); el.setAttribute('aria-hidden','false'); }
+  function closeSheet(id){ const el = qs('#'+id); if(!el) return; el.classList.remove('open'); el.setAttribute('aria-hidden','true'); }
+  qsa('.sheet .shade').forEach(sh=> sh.addEventListener('click', e=> closeSheet(e.target.getAttribute('data-close'))));
 
   // --- Feed rendering ---
-  const FEED = $('#feed');
+  const FEED = qs('#feed');
 
   function cardTemplate(it){
     const {id, category, data, favorite, archived, pinned} = it;
@@ -380,7 +380,7 @@
   // --- Gestures: swipe + double-tap + long-press reorder ---
   function wireCards(){
     // actions
-    $$('#feed .card .controls .btn').forEach(btn=>{
+    qsa('#feed .card .controls .btn').forEach(btn=>{
       btn.addEventListener('click', e=>{
         const card = e.target.closest('.card');
         const id = card.getAttribute('data-id');
@@ -396,7 +396,7 @@
     });
 
     // swipe
-    $$('#feed .card').forEach(card=>{
+    qsa('#feed .card').forEach(card=>{
       let startX=0, curX=0, swiping=false;
       card.addEventListener('touchstart', e=>{ if(e.touches.length===1){ startX=e.touches[0].clientX; swiping=true; card.style.transition='none'; }});
       card.addEventListener('touchmove', e=>{
@@ -419,7 +419,7 @@
     // enable Sortable
     if(!window.__sortableInit){
       new Sortable(FEED,{ animation:150, handle:'.handle', onEnd(evt){ // update order by moving updatedAt
-        const ids = $$('#feed .card').map(c=>c.getAttribute('data-id'));
+        const ids = qsa('#feed .card').map(c=>c.getAttribute('data-id'));
         // Reorder by setting updatedAt in descending order of position
         const base = Date.now(); ids.forEach((id, idx)=>{ const it = state.items.find(x=>x.id===id); if(it){ it.updatedAt = new Date(base - idx*1000).toISOString(); }});
         save(); render();
@@ -445,7 +445,7 @@
       </div>`;
     document.body.appendChild(panel);
 
-    const F = $('#editFields', panel) || panel.querySelector('#editFields');
+    const F = qs('#editFields', panel);
     const set = (html)=>{ F.innerHTML = html; };
     function input(name, label, val=''){ return `<label>${label}</label><input type="text" data-k="${name}" value="${(val??'').toString().replace(/"/g,'&quot;')}"/>`; }
     function select(name,label,opts,val){ return `<label>${label}</label><select data-k="${name}">${opts.map(o=>`<option ${o==val?'selected':''}>${o}</option>`).join('')}</select>` }
@@ -616,17 +616,17 @@
         map.on('click', e=>{
           const {lat,lng} = e.latlng; if(mapMarker) map.removeLayer(mapMarker);
           mapMarker = L.marker([lat,lng]).addTo(map);
-          $('#mapLat').value = lat.toFixed(6); $('#mapLng').value = lng.toFixed(6);
+          qs('#mapLat').value = lat.toFixed(6); qs('#mapLng').value = lng.toFixed(6);
         });
       } else { map.invalidateSize(); }
       // load previous
-      if(state.mapContext){ const {lat,lng} = state.mapContext; if(lat && lng){ map.setView([lat,lng], 8); if(mapMarker) map.removeLayer(mapMarker); mapMarker = L.marker([lat,lng]).addTo(map); $('#mapLat').value = lat; $('#mapLng').value = lng; } }
-      if(cb){ $('#mapSave').onclick = ()=>{ cb($('#mapLat').value, $('#mapLng').value); closeSheet('sheetMap'); } }
+      if(state.mapContext){ const {lat,lng} = state.mapContext; if(lat && lng){ map.setView([lat,lng], 8); if(mapMarker) map.removeLayer(mapMarker); mapMarker = L.marker([lat,lng]).addTo(map); qs('#mapLat').value = lat; qs('#mapLng').value = lng; } }
+      if(cb){ qs('#mapSave').onclick = ()=>{ cb(qs('#mapLat').value, qs('#mapLng').value); closeSheet('sheetMap'); } }
       else {
-        $('#mapSave').onclick = ()=>{
+        qs('#mapSave').onclick = ()=>{
           const { itemId } = state.mapContext||{}; const it = state.items.find(x=>x.id===itemId);
           if(it && it.category==='location'){
-            it.data.lat = $('#mapLat').value; it.data.lng = $('#mapLng').value; it.updatedAt=nowISO(); save(); render();
+            it.data.lat = qs('#mapLat').value; it.data.lng = qs('#mapLng').value; it.updatedAt=nowISO(); save(); render();
           }
           closeSheet('sheetMap');
         };
@@ -691,28 +691,28 @@
 
   // --- Wire header & sheets ---
   function wireUI(){
-    $('#btnAdd').addEventListener('click', ()=> openSheet('sheetAdd'));
-    $('#btnExport').addEventListener('click', ()=> openSheet('sheetExport'));
-    $('#btnAbout').addEventListener('click', ()=> openSheet('sheetAbout'));
+    qs('#btnAdd').addEventListener('click', ()=> openSheet('sheetAdd'));
+    qs('#btnExport').addEventListener('click', ()=> openSheet('sheetExport'));
+    qs('#btnAbout').addEventListener('click', ()=> openSheet('sheetAbout'));
 
-    $('#btnPrivacy').addEventListener('click', e=>{ state.privacy = !state.privacy; e.target.setAttribute('aria-pressed', String(state.privacy)); save(); render(); });
+    qs('#btnPrivacy').addEventListener('click', e=>{ state.privacy = !state.privacy; e.target.setAttribute('aria-pressed', String(state.privacy)); save(); render(); });
 
     // Add choices
-    $$('#sheetAdd .opt').forEach(o=> o.addEventListener('click', e=>{ closeSheet('sheetAdd'); addForm(e.currentTarget.getAttribute('data-add')); }));
+    qsa('#sheetAdd .opt').forEach(o=> o.addEventListener('click', e=>{ closeSheet('sheetAdd'); addForm(e.currentTarget.getAttribute('data-add')); }));
 
     // Export interactions
-    $$('#sheetExport [data-scope]').forEach(el=> el.addEventListener('click', e=>{ EXPORT.scope=e.currentTarget.getAttribute('data-scope'); buildExport(); haptic(6);}));
-    $$('#sheetExport [data-format]').forEach(el=> el.addEventListener('click', e=>{ EXPORT.format=e.currentTarget.getAttribute('data-format'); buildExport(); haptic(6);}));
+    qsa('#sheetExport [data-scope]').forEach(el=> el.addEventListener('click', e=>{ EXPORT.scope=e.currentTarget.getAttribute('data-scope'); buildExport(); haptic(6);}));
+    qsa('#sheetExport [data-format]').forEach(el=> el.addEventListener('click', e=>{ EXPORT.format=e.currentTarget.getAttribute('data-format'); buildExport(); haptic(6);}));
 
-    $('#btnDownload').addEventListener('click', ()=>{ buildExport(); const blob = new Blob([EXPORT.payload], {type:'text/plain'}); download(blob, EXPORT.filename); state.lastExportAt = nowISO(); save(); alert('Saved'); });
-    $('#btnCopy').addEventListener('click', async ()=>{ buildExport(); await navigator.clipboard.writeText(EXPORT.payload); state.lastExportAt = nowISO(); save(); alert('Copied to clipboard'); });
-    $('#btnShare').addEventListener('click', async ()=>{ buildExport(); if(navigator.share){ const file = new File([EXPORT.payload], EXPORT.filename, {type:'text/plain'}); try{ await navigator.share({ title:'EDC Export', text:'Erotic Deployment Console export', files:[file]}); state.lastExportAt=nowISO(); save(); }catch(e){} } else { alert('Share not supported'); }});
+    qs('#btnDownload').addEventListener('click', ()=>{ buildExport(); const blob = new Blob([EXPORT.payload], {type:'text/plain'}); download(blob, EXPORT.filename); state.lastExportAt = nowISO(); save(); alert('Saved'); });
+    qs('#btnCopy').addEventListener('click', async ()=>{ buildExport(); await navigator.clipboard.writeText(EXPORT.payload); state.lastExportAt = nowISO(); save(); alert('Copied to clipboard'); });
+    qs('#btnShare').addEventListener('click', async ()=>{ buildExport(); if(navigator.share){ const file = new File([EXPORT.payload], EXPORT.filename, {type:'text/plain'}); try{ await navigator.share({ title:'EDC Export', text:'Erotic Deployment Console export', files:[file]}); state.lastExportAt=nowISO(); save(); }catch(e){} } else { alert('Share not supported'); }});
 
     // Settings
-    $('#saveSettings').addEventListener('click', ()=>{ state.settings.totalYears = Number($('#setTotalYears').value||11); state.settings.startYear = Number($('#setStartYear').value||2025); save(); updateYearTracker(); alert('Saved'); });
-    $('#backupData').addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'}); download(blob, 'edc_backup.json'); });
-    $('#restoreData').addEventListener('click', ()=> $('#restoreFile').click());
-    $('#restoreFile').addEventListener('change', async (e)=>{ const f=e.target.files[0]; if(!f) return; const txt=await f.text(); try{ const json=JSON.parse(txt); localStorage.setItem('edc_state', JSON.stringify(json)); load(); updateYearTracker(); render(); alert('Restored'); }catch(err){ alert('Invalid file'); }});
+    qs('#saveSettings').addEventListener('click', ()=>{ state.settings.totalYears = Number(qs('#setTotalYears').value||11); state.settings.startYear = Number(qs('#setStartYear').value||2025); save(); updateYearTracker(); alert('Saved'); });
+    qs('#backupData').addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'}); download(blob, 'edc_backup.json'); });
+    qs('#restoreData').addEventListener('click', ()=> qs('#restoreFile').click());
+    qs('#restoreFile').addEventListener('change', async (e)=>{ const f=e.target.files[0]; if(!f) return; const txt=await f.text(); try{ const json=JSON.parse(txt); localStorage.setItem('edc_state', JSON.stringify(json)); load(); updateYearTracker(); render(); alert('Restored'); }catch(err){ alert('Invalid file'); }});
 
     // Close sheets on shade click (already wired globally) and when pressing Escape
     document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ ['sheetAdd','sheetExport','sheetAbout','sheetMap'].forEach(id=>closeSheet(id)); }});
@@ -729,9 +729,6 @@
       createItem('arc',{ name:'Spiral Protocol', desc:'Tightening cycles until luminous breakthrough', intensity:3 });
     }
   }
-
-  // helper to allow scoped query within new elements (for edit form)
-  function $(sel, root){ return (root||document).querySelector(sel); }
 
   document.addEventListener('DOMContentLoaded', start);
   </script>
