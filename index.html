@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Erotic Deployment Console — Mobile</title>
+  <meta name="theme-color" content="#0b0f17" />
+  <style>
+    :root{
+      --bg:#0b0f17; --bg-dim:#0a0e14; --card:#121827; --card-2:#0f1522; --text:#e6f2ff; --muted:#9fb3c8;
+      --accent:#70f0ff; --accent-2:#9a7bff; --accent-3:#2df59b; --danger:#ff6b7a; --warn:#ffcc66;
+      --success:#7dffb3; --ring: 0 0 0 2px rgba(112,240,255,.25);
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --radius: 18px; --radius-sm: 12px; --pad: 14px; --gap: 12px; --gap-lg: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;background:radial-gradient(1200px 1200px at 80% -10%, rgba(154,123,255,.12), transparent 60%),
+                        radial-gradient(900px 900px at -10% 110%, rgba(45,245,155,.10), transparent 55%),
+                        var(--bg);color:var(--text);font-family:var(--sans);}
+    body{margin:0;padding:0;}
+    a{color:var(--accent)}
+    /* Sticky Header */
+    header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(11,15,23,.9), rgba(11,15,23,.75));backdrop-filter: blur(8px);
+           border-bottom:1px solid rgba(112,240,255,.08)}
+    .hdr{display:flex;align-items:center;gap:10px;padding:10px 12px;}
+    .icon-swirl{width:38px;height:38px;border-radius:50%;background:conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
+                box-shadow:0 0 0 2px rgba(112,240,255,.35), inset 0 0 18px rgba(0,0,0,.35); position:relative;cursor:pointer}
+    .icon-swirl::after{content:"";position:absolute;inset:3px;border-radius:50%;background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.35), rgba(255,255,255,0));}
+    .hdr-title{flex:1;font-weight:700;letter-spacing:.2px}
+    .hdr-year{font-size:12px;color:var(--muted);}
+    .hdr-actions{display:flex;gap:8px}
+    .btn{appearance:none;border:0;padding:10px 14px;border-radius:999px;background:linear-gradient(180deg, #142033, #0f1626);
+         color:var(--text);font-weight:600;box-shadow:var(--shadow);position:relative;overflow:hidden;cursor:pointer}
+    .btn.small{padding:8px 12px;font-size:12px}
+    .btn[aria-pressed="true"], .btn.active{outline: none;box-shadow:var(--ring), var(--shadow)}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(112,240,255,.08);color:var(--accent)}
+    /* Main container */
+    .wrap{padding:10px 12px 90px}
+    .section-title{margin:16px 6px 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+    /* Card */
+    .card{background:linear-gradient(180deg, var(--card), var(--card-2));border:1px solid rgba(112,240,255,.09);
+          border-radius:var(--radius);box-shadow:var(--shadow);padding:var(--pad);margin-bottom:var(--gap-lg);
+          position:relative;touch-action:pan-y;}
+    .card.pinned{border-color:rgba(154,123,255,.4)}
+    .card .cat{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+    .card h3{margin:6px 0 8px;font-size:16px}
+    .row{display:flex;gap:10px}
+    .row>.col{flex:1}
+    label{display:block;margin:8px 2px 6px;font-size:12px;color:var(--muted)}
+    input[type="text"], input[type="number"], select, textarea{width:100%;background:#0b1220;color:var(--text);
+        border:1px solid rgba(112,240,255,.12);border-radius:12px;padding:12px 12px;outline:none}
+    textarea{min-height:72px;resize:vertical}
+    .tags{display:flex;flex-wrap:wrap;gap:6px}
+    .tag{padding:6px 10px;border-radius:999px;background:rgba(154,123,255,.12);color:#ccbfff;font-size:12px}
+    .tag button{margin-left:6px;background:transparent;border:0;color:#ccbfff;cursor:pointer}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .ctrl-btn{padding:8px 10px;border-radius:10px;border:1px dashed rgba(112,240,255,.18);background:rgba(112,240,255,.06);color:var(--text)}
+    .meta{display:flex;align-items:center;gap:8px;margin-top:8px}
+    .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px}
+    .pill.green{background:rgba(45,245,155,.12);color:#bafbdc;border:1px solid rgba(45,245,155,.35)}
+    .pill.yellow{background:rgba(255,204,102,.12);color:#ffe3a6;border:1px solid rgba(255,204,102,.35)}
+    .pill.red{background:rgba(255,107,122,.12);color:#ffc5cc;border:1px solid rgba(255,107,122,.35)}
+    /* Swipe affordance */
+    .swipe-hint{position:absolute;right:10px;top:10px;font-size:11px;color:var(--muted)}
+    .flags{display:flex;gap:6px}
+    .flag{width:9px;height:9px;border-radius:2px;opacity:.9}
+    .flag.fav{background:var(--accent-3)}
+    .flag.arch{background:var(--danger)}
+    .flag.exp{background:var(--accent)}
+    /* Bottom FAB */
+    .fab{position:fixed;right:16px;bottom:20px;z-index:60}
+    .fab button{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-size:26px}
+    /* Bottom sheet modal */
+    .sheet{position:fixed;inset:0;display:none;align-items:flex-end;z-index:80}
+    .sheet.open{display:flex}
+    .sheet .shade{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+    .sheet .panel{position:relative;width:100%;max-height:85vh;overflow:auto;background:linear-gradient(180deg, #0e1423, #0a0f1a);
+      border-radius:24px 24px 0 0;border-top:1px solid rgba(112,240,255,.12);padding:16px 14px 30px;box-shadow:0 -10px 30px rgba(0,0,0,.5)}
+    .sheet .grab{width:48px;height:5px;border-radius:999px;background:rgba(255,255,255,.18);margin:0 auto 10px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .opt{padding:12px;border-radius:14px;background:rgba(112,240,255,.06);border:1px solid rgba(112,240,255,.12);text-align:center}
+    /* Export Options */
+    .export-row{display:flex;gap:10px;flex-wrap:wrap}
+    .export-row .opt{flex:1}
+    /* Pull-down Quick Add */
+    .pull-hint{position:sticky;top:44px;text-align:center;color:var(--muted);font-size:12px;opacity:.7}
+    /* Ripple */
+    .ripple{position:absolute;border-radius:50%;transform:scale(0);animation:rip 600ms linear;background:rgba(255,255,255,.4)}
+    @keyframes rip{to{transform:scale(4);opacity:0}}
+    /* Drag handle & reorder */
+    .handle{cursor:grab;user-select:none;font-size:18px;opacity:.7}
+    .reorder-tip{font-size:12px;color:var(--muted);margin:8px 0}
+    /* Hidden */
+    .hidden{display:none !important}
+  </style>
+  <!-- SortableJS for smooth mobile drag-reorder -->
+  <script defer src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+  <!-- Leaflet for lightweight map pinning -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+  <header>
+    <div class="hdr">
+      <div class="icon-swirl" id="btnAbout" title="About / Settings / Global Vision" role="button" tabindex="0" aria-label="About"></div>
+      <div class="hdr-title">Erotic Deployment Console <span style="opacity:.6">· Mobile</span><div class="hdr-year" id="yearTracker">Year 1 of 11</div></div>
+      <div class="hdr-actions">
+        <button class="btn small" id="btnPrivacy" aria-pressed="false" title="Privacy Cloak">🕶️ Cloak</button>
+        <button class="btn small" id="btnExport" title="Export">📤 Export</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="pull-hint">⤴️ Pull down on top of the page for Quick Add</div>
+
+    <div class="section-title">Live Feed</div>
+    <div id="feed" aria-live="polite"></div>
+
+    <div class="reorder-tip" id="reorderTip">Long-press a card to enable drag reorder. Swipe ◀️ archive · ▶️ favorite · ✨ double tap to edit.</div>
+  </div>
+
+  <div class="fab"><button class="btn" id="btnAdd">✳️</button></div>
+
+  <!-- Add Sheet -->
+  <div class="sheet" id="sheetAdd" aria-hidden="true" role="dialog" aria-label="Add New">
+    <div class="shade" data-close="sheetAdd"></div>
+    <div class="panel">
+      <div class="grab"></div>
+      <h3 style="margin:4px 6px 14px">Add New</h3>
+      <div class="grid">
+        <div class="opt" data-add="protagonist">🧬 Protagonist</div>
+        <div class="opt" data-add="location">📍 Location / Map Node</div>
+        <div class="opt" data-add="seed">🌱 Business Seed</div>
+        <div class="opt" data-add="arc">📈 Narrative Arc</div>
+        <div class="opt" data-add="outcome">🎯 Outcome</div>
+        <div class="opt" data-add="custom">✨ Custom Category</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Sheet -->
+  <div class="sheet" id="sheetExport" aria-hidden="true" role="dialog" aria-label="Export">
+    <div class="shade" data-close="sheetExport"></div>
+    <div class="panel">
+      <div class="grab"></div>
+      <h3 style="margin:4px 6px 10px">Export</h3>
+      <div class="section-title">Scope</div>
+      <div class="export-row">
+        <div class="opt" data-scope="all">🌐 Export All Entries</div>
+        <div class="opt" data-scope="draft">✨ Current Story Draft</div>
+        <div class="opt" data-scope="new">🌱 Just New Entries</div>
+      </div>
+      <div class="section-title">Format</div>
+      <div class="export-row">
+        <div class="opt" data-format="txt">.txt</div>
+        <div class="opt" data-format="json">.json</div>
+        <div class="opt" data-format="csv">.csv</div>
+      </div>
+      <div class="section-title">Delivery</div>
+      <div class="export-row">
+        <div class="opt" id="btnDownload">💾 Save to Phone</div>
+        <div class="opt" id="btnCopy">📋 Copy</div>
+        <div class="opt" id="btnShare">🔗 Share</div>
+      </div>
+      <div class="section-title">Notes</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6">
+        • Exports respect 🕶️ Privacy Cloak.<br/>
+        • “Current Story Draft” = items you ⭐ (favorite).<br/>
+        • “Just New” = since last export.
+      </div>
+    </div>
+  </div>
+
+  <!-- About / Settings Sheet -->
+  <div class="sheet" id="sheetAbout" aria-hidden="true" role="dialog" aria-label="About & Settings">
+    <div class="shade" data-close="sheetAbout"></div>
+    <div class="panel">
+      <div class="grab"></div>
+      <h3 style="margin:0 6px 8px">About · Settings · Global Vision</h3>
+      <div class="card">
+        <div class="cat">Essence</div>
+        <h3>Cosmic story‑seeding device</h3>
+        <p style="color:var(--muted);line-height:1.6">Finger‑friendly, export‑first, AI‑ready (scaffolded only). Built for beaches, backrooms, and boardrooms.</p>
+      </div>
+      <div class="card">
+        <div class="cat">Settings</div>
+        <div class="row">
+          <div class="col">
+            <label>Total Odyssey Years</label>
+            <input type="number" id="setTotalYears" min="1" value="11"/>
+          </div>
+          <div class="col">
+            <label>Start Year</label>
+            <input type="number" id="setStartYear" value="2025"/>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="btn small" id="saveSettings">Save Settings</button>
+          <button class="btn small" id="backupData">Backup (JSON)</button>
+          <button class="btn small" id="restoreData">Restore</button>
+          <input type="file" id="restoreFile" accept="application/json" class="hidden" />
+        </div>
+        <div class="controls" style="margin-top:6px">
+          <button class="btn small" id="btnWipe" style="background:linear-gradient(180deg,#2a0f16,#1a0a0f);border:1px solid rgba(255,107,122,.25)">Danger: Wipe Local Data</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cat">Future Toggles</div>
+        <div class="controls">
+          <span class="chip">🤖 AI Write Assist (scaffolded)</span>
+          <span class="chip">☁️ Optional Cloud Sync (later)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Sheet -->
+  <div class="sheet" id="sheetMap" aria-hidden="true" role="dialog" aria-label="Map">
+    <div class="shade" data-close="sheetMap"></div>
+    <div class="panel">
+      <div class="grab"></div>
+      <h3 style="margin:0 6px 8px">Pin a Location</h3>
+      <div id="map" style="height:48vh;border-radius:16px;border:1px solid rgba(112,240,255,.1)"></div>
+      <div class="row" style="margin-top:10px">
+        <div class="col">
+          <label>Lat</label>
+          <input type="text" id="mapLat" />
+        </div>
+        <div class="col">
+          <label>Lng</label>
+          <input type="text" id="mapLng" />
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn small" id="mapSave">Save Pin</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // --- Small utilities ---
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const haptic = ms => (navigator.vibrate && navigator.vibrate(ms||10));
+  const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+  const nowISO = () => new Date().toISOString();
+  const clamp = (n,min,max)=> Math.max(min, Math.min(max,n));
+
+  // Ripple effect on .btn
+  const addRipples = () => {
+    document.body.addEventListener('click', e=>{
+      let t = e.target.closest('.btn, .opt');
+      if(!t) return;
+      const rect = t.getBoundingClientRect();
+      const r = document.createElement('span');
+      const size = Math.max(rect.width, rect.height);
+      r.className='ripple'; r.style.width=r.style.height = size+'px';
+      r.style.left = (e.clientX - rect.left - size/2)+'px';
+      r.style.top = (e.clientY - rect.top - size/2)+'px';
+      t.appendChild(r); setTimeout(()=>r.remove(), 650);
+      haptic(7);
+    });
+  };
+
+  // --- Privacy Cloak ---
+  const CLOAK_MAP = [
+    ['erotic','numinous'],['sensual','sacred'],['sex','union'],['lover','oracle'],['climax','unlock'],['orgasm','breakthrough'],
+    ['kink','cipher'],['nsfw','veil'],['seduce','entice'],['desire','calling'],['intimate','inner'],['queen','queen'],['kiss','anoint']
+  ];
+  const applyCloakStr = s => {
+    if(!state.privacy) return s;
+    let out = s; if(!out) return out;
+    for(const [a,b] of CLOAK_MAP){
+      out = out.replace(new RegExp(a,'ig'), b);
+    }
+    return out;
+  };
+
+  // --- State ---
+  const state = {
+    items: [], // {id, category, data:{...}, favorite, archived, exportFlag, draftFlag, pinned, createdAt, updatedAt}
+    privacy:false,
+    lastExportAt:null,
+    settings:{ totalYears:11, startYear:2025 },
+    mapContext:null, // {itemId}
+  };
+
+  // Load/Save
+  function save(){ localStorage.setItem('edc_state', JSON.stringify(state)); }
+  function load(){
+    try{ const s = JSON.parse(localStorage.getItem('edc_state')||'{}'); Object.assign(state, s);
+    }catch(e){}
+    if(!state.settings) state.settings = { totalYears:11, startYear:2025 };
+  }
+
+  // --- Year tracker ---
+  function updateYearTracker(){
+    const y0 = state.settings.startYear||2025; const total = state.settings.totalYears||11;
+    const y = new Date().getFullYear();
+    const idx = clamp((y - y0) + 1, 1, total);
+    $('#yearTracker').textContent = `Year ${idx} of ${total}`;
+  }
+
+  // --- Sheets helpers ---
+  function openSheet(id){ const el = $('#'+id); if(!el) return; el.classList.add('open'); el.setAttribute('aria-hidden','false'); }
+  function closeSheet(id){ const el = $('#'+id); if(!el) return; el.classList.remove('open'); el.setAttribute('aria-hidden','true'); }
+  $$('.sheet .shade').forEach(sh=> sh.addEventListener('click', e=> closeSheet(e.target.getAttribute('data-close'))));
+
+  // --- Feed rendering ---
+  const FEED = $('#feed');
+
+  function cardTemplate(it){
+    const {id, category, data, favorite, archived, pinned} = it;
+    const flags = `<div class="flags">${favorite?'<div class="flag fav"></div>':''}${archived?'<div class="flag arch"></div>':''}${it.exportFlag?'<div class="flag exp"></div>':''}</div>`;
+
+    let title = '', subtitle='', body='';
+    switch(category){
+      case 'protagonist':
+        title = applyCloakStr(data.name || 'Unnamed Protagonist');
+        subtitle = `${applyCloakStr(data.archetype||'Archetype?')} · ${applyCloakStr(data.culture||'Culture?')} · ${data.age||'Age?'}`;
+        body = `<div class="tags">${(data.tags||[]).map(t=>`<span class="tag">${applyCloakStr(t)}</span>`).join('')}</div>`;
+        break;
+      case 'location':
+        title = applyCloakStr(`${data.city||'City?'} — ${data.country||'Country?'}`);
+        subtitle = `${applyCloakStr(data.zone||'Zone?')} · Token:${applyCloakStr(data.token||'-')} · Queen:${applyCloakStr(data.queen||'-')}`;
+        body = (data.lat&&data.lng)?`<div class="pill">📍 ${Number(data.lat).toFixed(5)}, ${Number(data.lng).toFixed(5)}</div>`:'';
+        break;
+      case 'seed':
+        title = applyCloakStr(data.name||'Seed name?');
+        subtitle = `${applyCloakStr(data.tier||'-')} · ${applyCloakStr(data.category||'-')} · ${data.live?'LIVE':'concept'}`;
+        break;
+      case 'arc':
+        title = applyCloakStr(data.name||'Arc name?');
+        subtitle = applyCloakStr(data.desc||'');
+        body = `<div class="pill">Intensity ${data.intensity||1}</div>`;
+        break;
+      case 'outcome':
+        title = applyCloakStr(data.type||'Outcome type?');
+        subtitle = `Prefers ${data.format?.toUpperCase()||'—'} · ${applyCloakStr(data.ritual||'—')}`;
+        break;
+      default:
+        title = applyCloakStr(data.title||('Custom: '+category));
+        subtitle = Object.entries(data.fields||{}).map(([k,v])=>`${applyCloakStr(k)}: ${applyCloakStr(v)}`).join(' · ');
+    }
+
+    return `
+      <div class="card" data-id="${id}" data-cat="${category}">
+        <div class="swipe-hint">◀️ archive · ⭐ fav · ▶️</div>
+        <div class="row" style="align-items:center">
+          <div class="handle" title="Drag">⇅</div>
+          <div style="flex:1">
+            <div class="cat">${category}</div>
+            <h3>${title}</h3>
+            <div style="color:var(--muted)">${subtitle}</div>
+            ${body}
+          </div>
+          ${flags}
+        </div>
+        <div class="controls">
+          <button class="btn small" data-act="edit">Edit</button>
+          <button class="btn small" data-act="pin">${pinned?'Unpin':'Pin'}</button>
+          <button class="btn small" data-act="fav">${favorite?'Unfavorite':'Favorite'}</button>
+          <button class="btn small" data-act="export">Mark Export</button>
+          <button class="btn small" data-act="archive">${it.archived?'Unarchive':'Archive'}</button>
+          <button class="btn small" data-act="delete" style="background:linear-gradient(180deg,#2a0f16,#1a0a0f);border:1px solid rgba(255,107,122,.25)">Delete</button>
+        </div>
+      </div>`;
+  }
+
+  function render(){
+    FEED.innerHTML = '';
+    const items = [...state.items].sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.updatedAt)-new Date(a.updatedAt));
+    for(const it of items){ if(it.archived) continue; FEED.insertAdjacentHTML('beforeend', cardTemplate(it)); }
+    wireCards();
+  }
+
+  // --- Gestures: swipe + double-tap + long-press reorder ---
+  function wireCards(){
+    // actions
+    $$('#feed .card .controls .btn').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const card = e.target.closest('.card');
+        const id = card.getAttribute('data-id');
+        const it = state.items.find(x=>x.id===id); if(!it) return;
+        const act = e.target.getAttribute('data-act');
+        if(act==='edit'){ openEditor(it); }
+        if(act==='pin'){ it.pinned=!it.pinned; it.updatedAt=nowISO(); save(); render(); }
+        if(act==='fav'){ it.favorite=!it.favorite; it.draftFlag=it.favorite; it.updatedAt=nowISO(); save(); render(); }
+        if(act==='export'){ it.exportFlag=!it.exportFlag; it.updatedAt=nowISO(); save(); render(); }
+        if(act==='archive'){ it.archived=!it.archived; it.updatedAt=nowISO(); save(); render(); }
+        if(act==='delete'){ if(confirm('Delete this item?')){ state.items = state.items.filter(x=>x.id!==id); save(); render(); } }
+      });
+    });
+
+    // swipe
+    $$('#feed .card').forEach(card=>{
+      let startX=0, curX=0, swiping=false;
+      card.addEventListener('touchstart', e=>{ if(e.touches.length===1){ startX=e.touches[0].clientX; swiping=true; card.style.transition='none'; }});
+      card.addEventListener('touchmove', e=>{
+        if(!swiping) return; curX=e.touches[0].clientX; const dx = clamp(curX-startX, -120, 120); card.style.transform=`translateX(${dx}px)`; card.style.opacity = 1 - Math.abs(dx)/240; });
+      card.addEventListener('touchend', e=>{
+        if(!swiping) return; swiping=false; card.style.transition='transform .18s ease, opacity .18s ease';
+        const dx = curX-startX; const id = card.getAttribute('data-id'); const it = state.items.find(x=>x.id===id);
+        if(dx>90){ it.favorite=!it.favorite; it.draftFlag=it.favorite; haptic(10); }
+        else if(dx<-90){ it.archived = !it.archived; haptic(10); }
+        card.style.transform=''; card.style.opacity=''; it.updatedAt=nowISO(); save(); render();
+      });
+
+      // double-tap to edit
+      let lastTap=0; card.addEventListener('touchend', e=>{
+        const t = Date.now(); if(t-lastTap<250){ const id=card.getAttribute('data-id'); const it=state.items.find(x=>x.id===id); if(it) openEditor(it); } lastTap=t; });
+
+      // long-press hint handled globally via Sortable handle
+    });
+
+    // enable Sortable
+    if(!window.__sortableInit){
+      new Sortable(FEED,{ animation:150, handle:'.handle', onEnd(evt){ // update order by moving updatedAt
+        const ids = $$('#feed .card').map(c=>c.getAttribute('data-id'));
+        // Reorder by setting updatedAt in descending order of position
+        const base = Date.now(); ids.forEach((id, idx)=>{ const it = state.items.find(x=>x.id===id); if(it){ it.updatedAt = new Date(base - idx*1000).toISOString(); }});
+        save(); render();
+      }});
+      window.__sortableInit=true;
+    }
+  }
+
+  // --- Editor forms per category ---
+  function openEditor(it){
+    const cat = it.category; const data = it.data||{};
+    const panel = document.createElement('div');
+    panel.className='sheet open'; panel.setAttribute('role','dialog'); panel.innerHTML = `
+      <div class="shade"></div>
+      <div class="panel">
+        <div class="grab"></div>
+        <h3 style="margin:0 6px 8px">Edit ${cat}</h3>
+        <div id="editFields"></div>
+        <div class="controls">
+          <button class="btn small" id="saveEdit">Save</button>
+          <button class="btn small" id="cancelEdit">Cancel</button>
+        </div>
+      </div>`;
+    document.body.appendChild(panel);
+
+    const F = $('#editFields', panel) || panel.querySelector('#editFields');
+    const set = (html)=>{ F.innerHTML = html; };
+    function input(name, label, val=''){ return `<label>${label}</label><input type="text" data-k="${name}" value="${(val??'').toString().replace(/"/g,'&quot;')}"/>`; }
+    function select(name,label,opts,val){ return `<label>${label}</label><select data-k="${name}">${opts.map(o=>`<option ${o==val?'selected':''}>${o}</option>`).join('')}</select>` }
+    function textarea(name,label,val=''){ return `<label>${label}</label><textarea data-k="${name}">${(val??'')}</textarea>` }
+
+    if(cat==='protagonist'){
+      set(`
+        ${input('name','Name', data.name)}
+        ${input('archetype','Archetype', data.archetype)}
+        ${input('culture','Cultural Background', data.culture)}
+        ${input('age','Age', data.age)}
+        ${input('role','Role (Heroine/Lover/Oracle)', data.role||'')}
+        ${input('tags','Tags (comma separated)', (data.tags||[]).join(', '))}
+      `);
+    } else if(cat==='location'){
+      set(`
+        ${input('country','Country', data.country)}
+        ${input('city','City / Sacred Site', data.city)}
+        ${select('zone','Deployment Zone', ['Green','Yellow','Red'], data.zone)}
+        ${input('token','Story Token', data.token)}
+        ${input('queen','Queen Index', data.queen)}
+        <div class="controls"><button class="btn small" id="openMap">📌 Open Map</button></div>
+        ${input('lat','Lat', data.lat||'')}
+        ${input('lng','Lng', data.lng||'')}
+      `);
+    } else if(cat==='seed'){
+      set(`
+        ${input('name','Name', data.name)}
+        ${select('tier','Tier',['Short','Mid','Long-Term'], data.tier)}
+        ${input('category','Category', data.category||'Media / Tech / Ceremony / Economic / Myth')}
+        ${select('live','Status',['Concept only','Live deployment'], data.live? 'Live deployment':'Concept only')}
+      `);
+    } else if(cat==='arc'){
+      set(`
+        ${input('name','Arc Name', data.name)}
+        ${textarea('desc','Description', data.desc)}
+        <label>Intensity (1-5)</label><input type="number" min="1" max="5" data-k="intensity" value="${data.intensity||1}"/>
+      `);
+    } else if(cat==='outcome'){
+      set(`
+        ${select('type','Type',['System Unlock','Queen Found','Tech Birth','Public Story'], data.type)}
+        ${select('format','Export Pref',['txt','json','csv'], data.format||'txt')}
+        ${input('ritual','Ritual Tag', data.ritual||'Lunar / Solar / Solstice / Eclipse')}
+      `);
+    } else { // custom
+      set(`
+        ${input('title','Custom Title', data.title||'')}
+        ${textarea('fields','Key=Value lines','')}
+        <div style="font-size:12px;color:var(--muted)">Enter one per line: key=value</div>
+      `);
+    }
+
+    panel.querySelector('#cancelEdit').addEventListener('click', ()=> panel.remove());
+    panel.querySelector('.shade').addEventListener('click', ()=> panel.remove());
+
+    const mapBtn = panel.querySelector('#openMap');
+    if(mapBtn){ mapBtn.addEventListener('click', ()=>{ state.mapContext = { itemId: it.id, lat: data.lat, lng: data.lng }; save(); openMap(); }); }
+
+    panel.querySelector('#saveEdit').addEventListener('click', ()=>{
+      const kv = {}; panel.querySelectorAll('[data-k]').forEach(inp=>{
+        const k = inp.getAttribute('data-k'); let v = inp.value;
+        if(k==='intensity') v = Number(v||1); if(k==='live') v = (v==='Live deployment');
+        kv[k]=v;
+      });
+      if(cat==='protagonist'){ kv.tags = (kv.tags||'').split(',').map(s=>s.trim()).filter(Boolean); }
+      if(cat==='custom' && kv.fields){
+        const lines = kv.fields.split(/\n+/).filter(Boolean); const out={};
+        for(const line of lines){ const i=line.indexOf('='); if(i>0) out[line.slice(0,i).trim()]=line.slice(i+1).trim(); }
+        kv.fields = out; }
+      it.data = Object.assign({}, it.data, kv); it.updatedAt=nowISO(); save(); render(); panel.remove();
+    });
+  }
+
+  // --- Quick add factories ---
+  function createItem(category, data){
+    const it = { id:uid(), category, data, favorite:false, archived:false, exportFlag:false, draftFlag:false, pinned:false, createdAt:nowISO(), updatedAt:nowISO() };
+    state.items.unshift(it); save(); render(); return it;
+  }
+
+  function addForm(cat){
+    const panel = document.createElement('div');
+    panel.className='sheet open'; panel.setAttribute('role','dialog'); panel.innerHTML = `
+      <div class="shade"></div>
+      <div class="panel">
+        <div class="grab"></div>
+        <h3 style="margin:0 6px 8px">New ${cat}</h3>
+        <div id="f"></div>
+        <div class="controls">
+          <button class="btn small" id="save">Save to Pool</button>
+          <button class="btn small" id="cancel">Cancel</button>
+        </div>
+      </div>`;
+    document.body.appendChild(panel);
+    const F = panel.querySelector('#f');
+    function input(name, label, ph=''){ return `<label>${label}</label><input type="text" data-k="${name}" placeholder="${ph}"/>`; }
+    function select(name,label,opts){ return `<label>${label}</label><select data-k="${name}">${opts.map(o=>`<option>${o}</option>`).join('')}</select>` }
+    function textarea(name,label,ph=''){ return `<label>${label}</label><textarea data-k="${name}" placeholder="${ph}"></textarea>` }
+
+    if(cat==='protagonist'){
+      F.innerHTML = `
+        ${input('name','Name','e.g., The Radical Botanist')}
+        ${input('archetype','Archetype','Muse / Warrior / Healer ...')}
+        ${input('culture','Cultural Background','e.g., Lusophone, diaspora...')}
+        ${input('age','Age','e.g., 28')}
+        ${input('tags','Tags (comma separated)','fractal, botanist, nomad')}
+        ${select('role','Mark as',['Heroine','Lover','One-Time Oracle'])}
+      `;
+    }
+    if(cat==='location'){
+      F.innerHTML = `
+        ${input('country','Country','type to add custom')}
+        ${input('city','City / Sacred Site','Lisbon')}
+        ${select('zone','Deployment Zone',['Green','Yellow','Red'])}
+        ${input('token','Story Token','e.g., Azulejo-9')}
+        ${input('queen','Queen Index','# or tag')}
+        <div class="controls"><button class="btn small" id="mapBtn">📌 Map Pin</button></div>
+        ${input('lat','Lat','-')}
+        ${input('lng','Lng','-')}
+      `;
+      panel.querySelector('#mapBtn').addEventListener('click', ()=>{ state.mapContext={ itemId:null }; openMap((lat,lng)=>{ F.querySelector('[data-k="lat"]').value=lat; F.querySelector('[data-k="lng"]').value=lng; });});
+    }
+    if(cat==='seed'){
+      F.innerHTML = `
+        ${input('name','Name','Merch Drop #3')}
+        ${select('tier','Tier',['Short','Mid','Long-Term'])}
+        ${input('category','Category','Media / Tech / Ceremony / Economic / Myth (add custom)')}
+        ${select('live','Status',['Concept only','Live deployment'])}
+      `;
+    }
+    if(cat==='arc'){
+      F.innerHTML = `
+        ${select('name','Arc',['Spiral Protocol','Hero\'s Journey','Descent & Return','Two Worlds Bridge','Alchemy of Doubt'])}
+        ${textarea('desc','One-line meaning','e.g., cycle tightens until breakthrough')}
+        <label>Arc Intensity</label><input type="range" min="1" max="5" value="3" data-k="intensity"/>
+      `;
+    }
+    if(cat==='outcome'){
+      F.innerHTML = `
+        ${select('type','Type',['System Unlock','Queen Found','Tech Birth','Public Story'])}
+        ${select('format','Export Pref',['txt','json','csv'])}
+        ${input('ritual','Ritual Tag','Lunar / Solar / Solstice / Eclipse')}
+      `;
+    }
+    if(cat==='custom'){
+      F.innerHTML = `
+        ${input('title','Custom Category Name','e.g., Sigil / Venue / Sponsor')}
+        ${textarea('fields','Key=Value lines','Example:\nattendee=200\nvenue=Bowls Club')}
+      `;
+    }
+
+    panel.querySelector('#cancel').addEventListener('click', ()=> panel.remove());
+    panel.querySelector('.shade').addEventListener('click', ()=> panel.remove());
+    panel.querySelector('#save').addEventListener('click', ()=>{
+      const kv={}; panel.querySelectorAll('[data-k]').forEach(inp=>{ const k=inp.getAttribute('data-k'); let v=inp.value; if(k==='intensity') v=Number(v||1); if(k==='live') v=(v==='Live deployment'); kv[k]=v; });
+      if(cat==='protagonist'){ kv.tags = (kv.tags||'').split(',').map(s=>s.trim()).filter(Boolean); }
+      if(cat==='custom' && kv.fields){ const lines = kv.fields.split(/\n+/).filter(Boolean); const out={}; for(const line of lines){ const i=line.indexOf('='); if(i>0) out[line.slice(0,i).trim()] = line.slice(i+1).trim(); } kv.fields=out; }
+      const it = createItem(cat, kv); panel.remove(); openEditor(it); // let user refine immediately
+    });
+  }
+
+  // --- Map handling (Leaflet) ---
+  let map, mapMarker;
+  function openMap(cb){
+    openSheet('sheetMap');
+    setTimeout(()=>{ // defer to ensure panel is in DOM
+      if(!map){ map = L.map('map').setView([0,0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(map);
+        map.on('click', e=>{
+          const {lat,lng} = e.latlng; if(mapMarker) map.removeLayer(mapMarker);
+          mapMarker = L.marker([lat,lng]).addTo(map);
+          $('#mapLat').value = lat.toFixed(6); $('#mapLng').value = lng.toFixed(6);
+        });
+      } else { map.invalidateSize(); }
+      // load previous
+      if(state.mapContext){ const {lat,lng} = state.mapContext; if(lat && lng){ map.setView([lat,lng], 8); if(mapMarker) map.removeLayer(mapMarker); mapMarker = L.marker([lat,lng]).addTo(map); $('#mapLat').value = lat; $('#mapLng').value = lng; } }
+      if(cb){ $('#mapSave').onclick = ()=>{ cb($('#mapLat').value, $('#mapLng').value); closeSheet('sheetMap'); } }
+      else {
+        $('#mapSave').onclick = ()=>{
+          const { itemId } = state.mapContext||{}; const it = state.items.find(x=>x.id===itemId);
+          if(it && it.category==='location'){
+            it.data.lat = $('#mapLat').value; it.data.lng = $('#mapLng').value; it.updatedAt=nowISO(); save(); render();
+          }
+          closeSheet('sheetMap');
+        };
+      }
+    }, 50);
+  }
+
+  // --- Exporting ---
+  const EXPORT = { scope:'all', format:'txt', payload:'', filename:'export' };
+  function scopeItems(){
+    if(EXPORT.scope==='all') return state.items.filter(it=>!it.archived);
+    if(EXPORT.scope==='draft') return state.items.filter(it=>!it.archived && (it.draftFlag||it.favorite||it.exportFlag));
+    if(EXPORT.scope==='new'){
+      const ts = state.lastExportAt? new Date(state.lastExportAt).getTime() : 0;
+      return state.items.filter(it=>!it.archived && new Date(it.createdAt).getTime()>ts);
+    }
+    return state.items;
+  }
+
+  function toTXT(items){
+    const lines = [];
+    for(const it of items){
+      lines.push(`# ${it.category.toUpperCase()} — ${applyCloakStr((it.data.name||it.data.title||it.data.city||it.data.type||'').toString())}`);
+      lines.push(JSON.stringify(it.data, null, 2));
+      lines.push('');
+    }
+    return lines.join('\n');
+  }
+  function toJSON(items){ return JSON.stringify(items.map(it=>({ ...it, data: JSON.parse(JSON.stringify(it.data)) })), null, 2); }
+  function csvEscape(s){ if(s==null) return ''; s = s.toString().replace(/"/g,'""'); return `"${s}"`; }
+  function toCSV(items){
+    // Flatten with generic keys
+    const keys = new Set(['id','category','createdAt','updatedAt','favorite','archived','exportFlag','pinned']);
+    const rows = [];
+    for(const it of items){ Object.keys(it.data||{}).forEach(k=>keys.add('data.'+k)); }
+    const header = Array.from(keys);
+    rows.push(header.join(','));
+    for(const it of items){
+      const row = header.map(k=>{
+        if(k.startsWith('data.')){ const kk=k.slice(5); let v = it.data? it.data[kk]:''; if(typeof v==='object') v = JSON.stringify(v); return csvEscape(state.privacy? applyCloakStr(String(v)): String(v)); }
+        return csvEscape(it[k]);
+      });
+      rows.push(row.join(','));
+    }
+    return rows.join('\n');
+  }
+  function buildExport(){
+    const items = scopeItems();
+    let payload='';
+    if(EXPORT.format==='txt') payload = toTXT(items);
+    if(EXPORT.format==='json') payload = toJSON(items);
+    if(EXPORT.format==='csv') payload = toCSV(items);
+    EXPORT.payload = payload; EXPORT.filename = `edc_${EXPORT.scope}_${EXPORT.format}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.${EXPORT.format}`;
+  }
+  function download(blob, filename){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000); }
+
+  // --- Pull-down Quick Add ---
+  let pulling=false, pullStartY=0;
+  window.addEventListener('touchstart', e=>{ if(window.scrollY===0){ pulling=true; pullStartY=e.touches[0].clientY; }});
+  window.addEventListener('touchend', ()=>{ pulling=false; });
+  window.addEventListener('touchmove', e=>{ if(!pulling) return; const dy = e.touches[0].clientY - pullStartY; if(dy>70){ pulling=false; openSheet('sheetAdd'); }});
+
+  // --- Wire header & sheets ---
+  function wireUI(){
+    $('#btnAdd').addEventListener('click', ()=> openSheet('sheetAdd'));
+    $('#btnExport').addEventListener('click', ()=> openSheet('sheetExport'));
+    $('#btnAbout').addEventListener('click', ()=> openSheet('sheetAbout'));
+
+    $('#btnPrivacy').addEventListener('click', e=>{ state.privacy = !state.privacy; e.target.setAttribute('aria-pressed', String(state.privacy)); save(); render(); });
+
+    // Add choices
+    $$('#sheetAdd .opt').forEach(o=> o.addEventListener('click', e=>{ closeSheet('sheetAdd'); addForm(e.currentTarget.getAttribute('data-add')); }));
+
+    // Export interactions
+    $$('#sheetExport [data-scope]').forEach(el=> el.addEventListener('click', e=>{ EXPORT.scope=e.currentTarget.getAttribute('data-scope'); buildExport(); haptic(6);}));
+    $$('#sheetExport [data-format]').forEach(el=> el.addEventListener('click', e=>{ EXPORT.format=e.currentTarget.getAttribute('data-format'); buildExport(); haptic(6);}));
+
+    $('#btnDownload').addEventListener('click', ()=>{ buildExport(); const blob = new Blob([EXPORT.payload], {type:'text/plain'}); download(blob, EXPORT.filename); state.lastExportAt = nowISO(); save(); alert('Saved'); });
+    $('#btnCopy').addEventListener('click', async ()=>{ buildExport(); await navigator.clipboard.writeText(EXPORT.payload); state.lastExportAt = nowISO(); save(); alert('Copied to clipboard'); });
+    $('#btnShare').addEventListener('click', async ()=>{ buildExport(); if(navigator.share){ const file = new File([EXPORT.payload], EXPORT.filename, {type:'text/plain'}); try{ await navigator.share({ title:'EDC Export', text:'Erotic Deployment Console export', files:[file]}); state.lastExportAt=nowISO(); save(); }catch(e){} } else { alert('Share not supported'); }});
+
+    // Settings
+    $('#saveSettings').addEventListener('click', ()=>{ state.settings.totalYears = Number($('#setTotalYears').value||11); state.settings.startYear = Number($('#setStartYear').value||2025); save(); updateYearTracker(); alert('Saved'); });
+    $('#backupData').addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'}); download(blob, 'edc_backup.json'); });
+    $('#restoreData').addEventListener('click', ()=> $('#restoreFile').click());
+    $('#restoreFile').addEventListener('change', async (e)=>{ const f=e.target.files[0]; if(!f) return; const txt=await f.text(); try{ const json=JSON.parse(txt); localStorage.setItem('edc_state', JSON.stringify(json)); load(); updateYearTracker(); render(); alert('Restored'); }catch(err){ alert('Invalid file'); }});
+
+    // Close sheets on shade click (already wired globally) and when pressing Escape
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ ['sheetAdd','sheetExport','sheetAbout','sheetMap'].forEach(id=>closeSheet(id)); }});
+  }
+
+  // --- Bootstrap ---
+  function start(){
+    load(); updateYearTracker(); addRipples(); wireUI(); render();
+    // Showcase: optional first flow example if empty
+    if(state.items.length===0){
+      createItem('protagonist',{ name:'The Radical Botanist with Fractal Tattoos', archetype:'Healer', culture:'Iberian diaspora', age:'28', tags:['fractal','botanist','nomad'], role:'Heroine' });
+      createItem('location',{ country:'Portugal', city:'Lisbon', zone:'Yellow', token:'Spiral-7', queen:'Q-13', lat:'38.7223', lng:'-9.1393' });
+      createItem('seed',{ name:'Short-term merch drop for Lunar Ceremonies', tier:'Short', category:'Ceremony', live:false });
+      createItem('arc',{ name:'Spiral Protocol', desc:'Tightening cycles until luminous breakthrough', intensity:3 });
+    }
+  }
+
+  // helper to allow scoped query within new elements (for edit form)
+  function $(sel, root){ return (root||document).querySelector(sel); }
+
+  document.addEventListener('DOMContentLoaded', start);
+  </script>
+</body>
+</html>
